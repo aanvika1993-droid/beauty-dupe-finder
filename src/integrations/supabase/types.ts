@@ -6,21 +6,226 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.1"
-  }
+export interface Database {
   public: {
     Tables: {
-      [_ in never]: never
+      products: {
+        Row: {
+          id: string
+          name: string
+          brand: string
+          price: number
+          image_url: string | null
+          category: string
+          subcategory: string | null
+          description: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          brand: string
+          price: number
+          image_url?: string | null
+          category: string
+          subcategory?: string | null
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          brand?: string
+          price?: number
+          image_url?: string | null
+          category?: string
+          subcategory?: string | null
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      categories: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          subcategories: string[]
+          image_url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          subcategories?: string[]
+          image_url?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          subcategories?: string[]
+          image_url?: string | null
+          created_at?: string
+        }
+      }
+      dupes: {
+        Row: {
+          id: string
+          original_product_id: string
+          dupe_product_id: string
+          similarity_score: number
+          savings_percent: number
+          category: string
+          total_votes: number
+          avg_rating: number
+          is_featured: boolean
+          is_trending: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          original_product_id: string
+          dupe_product_id: string
+          similarity_score: number
+          savings_percent: number
+          category: string
+          total_votes?: number
+          avg_rating?: number
+          is_featured?: boolean
+          is_trending?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          original_product_id?: string
+          dupe_product_id?: string
+          similarity_score?: number
+          savings_percent?: number
+          category?: string
+          total_votes?: number
+          avg_rating?: number
+          is_featured?: boolean
+          is_trending?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      user_favorites: {
+        Row: {
+          id: string
+          user_id: string
+          dupe_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          dupe_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          dupe_id?: string
+          created_at?: string
+        }
+      }
+      reviews: {
+        Row: {
+          id: string
+          dupe_id: string
+          user_id: string
+          rating: number
+          comment: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          dupe_id: string
+          user_id: string
+          rating: number
+          comment?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          dupe_id?: string
+          user_id?: string
+          rating?: number
+          comment?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      profiles: {
+        Row: {
+          id: string
+          username: string | null
+          display_name: string | null
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          username?: string | null
+          display_name?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          username?: string | null
+          display_name?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      search_dupes: {
+        Args: {
+          search_query: string
+        }
+        Returns: {
+          id: string
+          similarity_score: number
+          savings_percent: number
+          category: string
+          total_votes: number
+          avg_rating: number
+          is_featured: boolean
+          is_trending: boolean
+          created_at: string
+          original_id: string
+          original_name: string
+          original_brand: string
+          original_price: number
+          original_image: string
+          dupe_id: string
+          dupe_name: string
+          dupe_brand: string
+          dupe_price: number
+          dupe_image: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
@@ -31,125 +236,50 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+// Helper types for application use
+export type Product = Database['public']['Tables']['products']['Row']
+export type Category = Database['public']['Tables']['categories']['Row']
+export type Dupe = Database['public']['Tables']['dupes']['Row']
+export type UserFavorite = Database['public']['Tables']['user_favorites']['Row']
+export type Review = Database['public']['Tables']['reviews']['Row']
+export type Profile = Database['public']['Tables']['profiles']['Row']
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
-
-export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+// Composite types for UI components
+export interface ProductInfo {
+  id: string
+  name: string
+  brand: string
+  price: number
+  image: string
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
 
-export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+export interface DupeWithProducts {
+  id: string
+  similarityScore: number
+  savingsPercent: number
+  category: string
+  totalVotes: number
+  avgRating: number
+  isFeatured: boolean
+  isTrending: boolean
+  createdAt: string
+  original: ProductInfo
+  dupe: ProductInfo
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
 
-export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+export interface TrendingDupe {
+  id: string
+  rank: number
+  original: { brand: string; name: string }
+  dupe: { brand: string; name: string }
+  savings: string
+  votes: number
+  rating: number
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
 
-export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+export interface ReviewWithProfile extends Review {
+  profile: {
+    display_name: string | null
+    avatar_url: string | null
+  } | null
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
-
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
-
-export const Constants = {
-  public: {
-    Enums: {},
-  },
-} as const
