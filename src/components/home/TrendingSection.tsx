@@ -1,56 +1,12 @@
 import { motion } from "framer-motion";
 import { TrendingUp, Star, Users } from "lucide-react";
 import { Link } from "react-router-dom";
-
-const trendingDupes = [
-  {
-    id: "5",
-    rank: 1,
-    original: { brand: "Drunk Elephant", name: "Protini Polypeptide Cream" },
-    dupe: { brand: "The Inkey List", name: "Peptide Moisturizer" },
-    savings: "$52",
-    votes: 2340,
-    rating: 4.8,
-  },
-  {
-    id: "6",
-    rank: 2,
-    original: { brand: "Tom Ford", name: "Lost Cherry" },
-    dupe: { brand: "Dossier", name: "Woody Cherry" },
-    savings: "$285",
-    votes: 1890,
-    rating: 4.6,
-  },
-  {
-    id: "7",
-    rank: 3,
-    original: { brand: "Pat McGrath", name: "Skin Fetish Foundation" },
-    dupe: { brand: "L'Oreal", name: "True Match Lumi" },
-    savings: "$54",
-    votes: 1654,
-    rating: 4.5,
-  },
-  {
-    id: "8",
-    rank: 4,
-    original: { brand: "Tatcha", name: "Dewy Skin Cream" },
-    dupe: { brand: "CeraVe", name: "Moisturizing Cream" },
-    savings: "$48",
-    votes: 1432,
-    rating: 4.7,
-  },
-  {
-    id: "9",
-    rank: 5,
-    original: { brand: "Fenty Beauty", name: "Gloss Bomb" },
-    dupe: { brand: "Maybelline", name: "Lifter Gloss" },
-    savings: "$12",
-    votes: 1289,
-    rating: 4.4,
-  },
-];
+import { useTrendingDupes } from "@/hooks/api/useDupes";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const TrendingSection = () => {
+  const { data: trendingDupes, isLoading, error } = useTrendingDupes(5);
+
   return (
     <section className="py-16 md:py-24">
       <div className="container px-4 md:px-6">
@@ -71,52 +27,70 @@ const TrendingSection = () => {
             </h2>
 
             <div className="space-y-4">
-              {trendingDupes.map((item, index) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1, duration: 0.4 }}
-                >
-                  <Link
-                    to={`/dupe/${item.id}`}
-                    className="group flex items-center gap-4 rounded-xl border border-border/50 bg-card p-4 transition-all hover:border-gold/30 hover:shadow-soft"
+              {isLoading ? (
+                // Loading skeletons
+                [...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-4 rounded-xl border border-border/50 bg-card p-4">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-3 w-1/3" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </div>
+                    <Skeleton className="h-6 w-16" />
+                  </div>
+                ))
+              ) : error ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">Unable to load trending dupes.</p>
+                </div>
+              ) : (
+                trendingDupes?.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1, duration: 0.4 }}
                   >
-                    {/* Rank */}
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted font-display text-lg font-semibold text-foreground">
-                      {item.rank}
-                    </div>
-
-                    {/* Content */}
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-muted-foreground">
-                        {item.original.brand} → {item.dupe.brand}
-                      </p>
-                      <p className="truncate font-medium text-foreground">
-                        {item.original.name}
-                      </p>
-                    </div>
-
-                    {/* Stats */}
-                    <div className="hidden sm:flex items-center gap-4 text-sm">
-                      <div className="flex items-center gap-1 text-gold">
-                        <Star className="h-4 w-4 fill-current" />
-                        <span>{item.rating}</span>
+                    <Link
+                      to={`/dupe/${item.id}`}
+                      className="group flex items-center gap-4 rounded-xl border border-border/50 bg-card p-4 transition-all hover:border-gold/30 hover:shadow-soft"
+                    >
+                      {/* Rank */}
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted font-display text-lg font-semibold text-foreground">
+                        {item.rank}
                       </div>
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Users className="h-4 w-4" />
-                        <span>{item.votes.toLocaleString()}</span>
-                      </div>
-                    </div>
 
-                    {/* Savings */}
-                    <div className="shrink-0 text-right">
-                      <p className="text-sm font-bold text-sage">Save {item.savings}</p>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
+                      {/* Content */}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-muted-foreground">
+                          {item.original.brand} → {item.dupe.brand}
+                        </p>
+                        <p className="truncate font-medium text-foreground">
+                          {item.original.name}
+                        </p>
+                      </div>
+
+                      {/* Stats */}
+                      <div className="hidden sm:flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-1 text-gold">
+                          <Star className="h-4 w-4 fill-current" />
+                          <span>{item.rating}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <Users className="h-4 w-4" />
+                          <span>{item.votes.toLocaleString()}</span>
+                        </div>
+                      </div>
+
+                      {/* Savings */}
+                      <div className="shrink-0 text-right">
+                        <p className="text-sm font-bold text-sage">Save {item.savings}</p>
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))
+              )}
             </div>
           </motion.div>
 
