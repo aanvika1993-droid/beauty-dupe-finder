@@ -1,83 +1,12 @@
 import { motion } from "framer-motion";
 import DupeCard from "@/components/cards/DupeCard";
-
-// Mock data for featured dupes
-const featuredDupes = [
-  {
-    id: "1",
-    original: {
-      name: "Pillow Talk Lipstick",
-      brand: "Charlotte Tilbury",
-      price: 34,
-      image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=300&h=300&fit=crop",
-    },
-    dupe: {
-      name: "Lip Lingerie XXL",
-      brand: "NYX",
-      price: 10,
-      image: "https://images.unsplash.com/photo-1631214524020-7e18db9a8f92?w=300&h=300&fit=crop",
-    },
-    similarityScore: 92,
-    category: "Lipstick",
-    savingsPercent: 71,
-  },
-  {
-    id: "2",
-    original: {
-      name: "C.E. Ferulic Serum",
-      brand: "SkinCeuticals",
-      price: 182,
-      image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=300&h=300&fit=crop",
-    },
-    dupe: {
-      name: "Vitamin C Serum",
-      brand: "Timeless",
-      price: 28,
-      image: "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=300&h=300&fit=crop",
-    },
-    similarityScore: 87,
-    category: "Serum",
-    savingsPercent: 85,
-  },
-  {
-    id: "3",
-    original: {
-      name: "Crème de la Mer",
-      brand: "La Mer",
-      price: 380,
-      image: "https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=300&h=300&fit=crop",
-    },
-    dupe: {
-      name: "Marine Hyaluronics",
-      brand: "The Ordinary",
-      price: 12,
-      image: "https://images.unsplash.com/photo-1617897903246-719242758050?w=300&h=300&fit=crop",
-    },
-    similarityScore: 78,
-    category: "Moisturizer",
-    savingsPercent: 97,
-  },
-  {
-    id: "4",
-    original: {
-      name: "Hollywood Flawless Filter",
-      brand: "Charlotte Tilbury",
-      price: 49,
-      image: "https://images.unsplash.com/photo-1631730486572-226d1f595b68?w=300&h=300&fit=crop",
-    },
-    dupe: {
-      name: "Luminous Silk Glow",
-      brand: "e.l.f.",
-      price: 14,
-      image: "https://images.unsplash.com/photo-1596755389378-c31d21fd1273?w=300&h=300&fit=crop",
-    },
-    similarityScore: 89,
-    category: "Primer",
-    savingsPercent: 71,
-  },
-];
+import { useFeaturedDupes } from "@/hooks/api/useDupes";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "react-router-dom";
 
 const FeaturedDupes = () => {
+  const { data: featuredDupes, isLoading, error } = useFeaturedDupes(4);
+
   return (
     <section className="bg-cream/50 py-16 md:py-24">
       <div className="container px-4 md:px-6">
@@ -103,30 +32,54 @@ const FeaturedDupes = () => {
               Our most popular dupe discoveries this week, verified by ingredient analysis and community reviews
             </p>
           </div>
-          <a
-            href="/browse"
+          <Link
+            to="/browse"
             className="text-sm font-medium text-gold hover:text-gold-dark transition-colors flex items-center gap-2"
           >
             View all dupes
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
-          </a>
+          </Link>
         </motion.div>
 
         {/* Dupe Cards Grid */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {featuredDupes.map((dupe, index) => (
-            <motion.div
-              key={dupe.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1, duration: 0.5 }}
-            >
-              <DupeCard {...dupe} />
-            </motion.div>
-          ))}
+          {isLoading ? (
+            // Loading skeletons
+            [...Array(4)].map((_, i) => (
+              <div key={i} className="space-y-4">
+                <Skeleton className="aspect-square rounded-xl" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            ))
+          ) : error ? (
+            // Error state
+            <div className="col-span-full text-center py-8">
+              <p className="text-muted-foreground">Unable to load featured dupes. Please try again later.</p>
+            </div>
+          ) : (
+            // Actual data
+            featuredDupes?.map((dupe, index) => (
+              <motion.div
+                key={dupe.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+              >
+                <DupeCard
+                  id={dupe.id}
+                  original={dupe.original}
+                  dupe={dupe.dupe}
+                  similarityScore={dupe.similarityScore}
+                  category={dupe.category}
+                  savingsPercent={dupe.savingsPercent}
+                />
+              </motion.div>
+            ))
+          )}
         </div>
       </div>
     </section>
