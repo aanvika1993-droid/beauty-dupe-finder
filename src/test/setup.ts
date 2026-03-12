@@ -1,5 +1,8 @@
 import "@testing-library/jest-dom";
 
+// Import mocks
+import "./mocks/supabase";
+
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: (query: string) => ({
