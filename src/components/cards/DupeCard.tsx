@@ -1,7 +1,9 @@
 import { Heart, ArrowRight } from "lucide-react";
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useFavorites, useToggleFavorite } from "@/hooks/api/useFavorites";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 interface Product {
   name: string;
@@ -27,7 +29,35 @@ const DupeCard = ({
   category,
   savingsPercent,
 }: DupeCardProps) => {
-  const [isFavorite, setIsFavorite] = useState(false);
+  const { user } = useAuth();
+  const { data: favorites } = useFavorites();
+  const toggleFavorite = useToggleFavorite();
+  const { toast } = useToast();
+
+  const isFavorite = favorites?.includes(id) ?? false;
+
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to save favorites",
+      });
+      return;
+    }
+
+    try {
+      await toggleFavorite.mutateAsync({ dupeId: id, isFavorite });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Could not update favorite",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <Link
@@ -75,11 +105,9 @@ const DupeCard = ({
 
         {/* Favorite button */}
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            setIsFavorite(!isFavorite);
-          }}
-          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-background/90 shadow-sm transition-all hover:bg-background hover:shadow-md"
+          onClick={handleFavoriteClick}
+          disabled={toggleFavorite.isPending}
+          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-background/90 shadow-sm transition-all hover:bg-background hover:shadow-md disabled:opacity-50"
         >
           <Heart
             className={cn(
